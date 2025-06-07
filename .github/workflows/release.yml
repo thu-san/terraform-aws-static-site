@@ -62,6 +62,24 @@ jobs:
           README.md
           CHANGELOG.md
 
-    - name: Update Terraform Registry
+    - name: Terraform Registry Publishing
       run: |
-        echo "::notice title=Terraform Registry::Don't forget to publish to the Terraform Registry if applicable!"
+        echo "## 📦 Terraform Registry Publishing" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "This release will be automatically published to the Terraform Registry." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Module Information:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Registry URL**: https://registry.terraform.io/modules/thu-san/static-site/aws" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Source**: \`thu-san/static-site/aws\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Usage:" >> $GITHUB_STEP_SUMMARY
+        echo '```hcl' >> $GITHUB_STEP_SUMMARY
+        echo 'module "static_site" {' >> $GITHUB_STEP_SUMMARY
+        echo '  source  = "thu-san/static-site/aws"' >> $GITHUB_STEP_SUMMARY
+        echo '  version = "${{ steps.get_version.outputs.VERSION }}"' >> $GITHUB_STEP_SUMMARY
+        echo '  # ... configuration ...' >> $GITHUB_STEP_SUMMARY
+        echo '}' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "⏱️ **Note**: It may take 5-10 minutes for the module to appear in the registry." >> $GITHUB_STEP_SUMMARY

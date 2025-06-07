@@ -1,6 +1,7 @@
 # AWS Static Site Terraform Module
 
 [![Terraform CI](https://github.com/thu-san/terraform-aws-static-site/workflows/Terraform%20CI/badge.svg)](https://github.com/thu-san/terraform-aws-static-site/actions)
+[![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-thu--san%2Fstatic--site%2Faws-blue.svg)](https://registry.terraform.io/modules/thu-san/static-site/aws)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Terraform Version](https://img.shields.io/badge/Terraform-%3E%3D%201.0-623CE4.svg)](https://www.terraform.io)
 
@@ -22,11 +23,28 @@ This Terraform module creates a complete static website hosting solution on AWS 
 
 ## Usage
 
-### Basic Usage
+### From Terraform Registry (Recommended)
 
 ```hcl
 module "static_site" {
-  source = "path/to/terraform-aws-static-site"
+  source  = "thu-san/static-site/aws"
+  version = "~> 1.0"
+
+  s3_bucket_name               = "my-awesome-site-bucket"
+  cloudfront_distribution_name = "my-awesome-site"
+
+  tags = {
+    Environment = "production"
+    Project     = "my-awesome-site"
+  }
+}
+```
+
+### From GitHub
+
+```hcl
+module "static_site" {
+  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.0.0"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
