@@ -1,0 +1,30 @@
+{
+  "name": "terraform-aws-static-site",
+  "version": "1.0.0",
+  "description": "Terraform module for creating AWS static websites with S3 and CloudFront",
+  "keywords": [
+    "terraform",
+    "aws",
+    "s3",
+    "cloudfront",
+    "static-site",
+    "cdn",
+    "website"
+  ],
+  "homepage": "https://github.com/thu-san/terraform-aws-static-site",
+  "bugs": {
+    "url": "https://github.com/thu-san/terraform-aws-static-site/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Thu San",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thu-san/terraform-aws-static-site.git"
+  },
+  "terraform": {
+    "required_version": ">= 1.0",
+    "required_providers": {
+      "aws": ">= 5.0"
+    }
+  }
+}
