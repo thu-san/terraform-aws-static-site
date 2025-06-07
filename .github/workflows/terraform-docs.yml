@@ -1,0 +1,53 @@
+name: Generate Terraform Docs
+
+on:
+  pull_request:
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - 'README.md'
+
+jobs:
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate Terraform Docs
+      uses: terraform-docs/gh-actions@v1.0.0
+      with:
+        working-dir: .
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
+        git-commit-message: "docs: update Terraform documentation"
+
+    - name: Generate Example Docs
+      run: |
+        # Install terraform-docs
+        curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+        tar -xzf terraform-docs.tar.gz
+        chmod +x terraform-docs
+        
+        # Generate docs for each example
+        for dir in examples/*/; do
+          if [ -d "$dir" ]; then
+            echo "Generating docs for $dir"
+            ./terraform-docs markdown table --output-file README.md --output-mode inject "$dir"
+          fi
+        done
+        
+        # Check if there are changes
+        if [ -n "$(git status --porcelain)" ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add examples/*/README.md
+          git commit -m "docs: update example documentation"
+          git push
+        fi

@@ -1,5 +1,9 @@
 # AWS Static Site Terraform Module
 
+[![Terraform CI](https://github.com/thu-san/terraform-aws-static-site/workflows/Terraform%20CI/badge.svg)](https://github.com/thu-san/terraform-aws-static-site/actions)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Terraform Version](https://img.shields.io/badge/Terraform-%3E%3D%201.0-623CE4.svg)](https://www.terraform.io)
+
 This Terraform module creates a complete static website hosting solution on AWS using S3 for storage and CloudFront for global content delivery.
 
 ## 🎯 Key Differentiator

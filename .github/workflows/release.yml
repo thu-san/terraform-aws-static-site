@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Terraform for validation
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.0
+
+    - name: Validate Module
+      run: |
+        terraform init
+        terraform validate
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Get changelog entry
+      id: changelog
+      run: |
+        # Extract the changelog entry for this version
+        awk -v ver="${{ steps.get_version.outputs.VERSION }}" '
+          /^## \[/ { if (p) exit; if ($2 == "["ver"]") p=1; next }
+          p { print }
+        ' CHANGELOG.md > release_notes.md
+        
+        # If no specific version entry, get the latest entry
+        if [ ! -s release_notes.md ]; then
+          awk '/^## \[.*\] -/ { if (++count == 1) { getline; p=1 } }
+               /^## \[/ && count > 0 { exit }
+               p { print }' CHANGELOG.md > release_notes.md
+        fi
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: v${{ steps.get_version.outputs.VERSION }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          LICENSE
+          README.md
+          CHANGELOG.md
+
+    - name: Update Terraform Registry
+      run: |
+        echo "::notice title=Terraform Registry::Don't forget to publish to the Terraform Registry if applicable!"
