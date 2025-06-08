@@ -1,6 +1,6 @@
 {
   "name": "terraform-aws-static-site",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Terraform module for creating AWS static websites with S3 and CloudFront",
   "keywords": [
     "terraform",
