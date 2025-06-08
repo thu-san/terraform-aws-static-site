@@ -135,6 +135,7 @@ module "static_site" {
 | route53_zone_id              | Route53 hosted zone ID for creating DNS records  | `string`       | `""`      |    no    |
 | log_delivery_destination_arn | ARN of the CloudWatch log delivery destination   | `string`       | `""`      |    no    |
 | s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs    | `list(object)` | See below |    no    |
+| log_record_fields            | List of CloudWatch log record fields to include  | `list(string)` | `[]`      |    no    |
 | tags                         | Tags to apply to all resources                   | `map(string)`  | `{}`      |    no    |
 
 ## Outputs

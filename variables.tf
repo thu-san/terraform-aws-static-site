@@ -45,3 +45,9 @@ variable "s3_delivery_configuration" {
     }
   ]
 }
+
+variable "log_record_fields" {
+  description = "List of CloudWatch log record fields to include in log delivery. https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html#BasicDistributionFileFormat"
+  type        = list(string)
+  default     = []
+}

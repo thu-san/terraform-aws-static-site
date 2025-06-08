@@ -22,7 +22,7 @@ locals {
   geo_restriction_type     = "none"
   minimum_protocol_version = "TLSv1.2_2021"
 
-  log_record_fields = [
+  log_record_fields = length(var.log_record_fields) > 0 ? var.log_record_fields : [
     "timestamp",
     # "distributionid", # by default, distributionid is in the path already
     "date",
