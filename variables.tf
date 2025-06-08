@@ -41,7 +41,7 @@ variable "s3_delivery_configuration" {
   default = [
     {
       suffix_path                 = "/{account-id}/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
-      enable_hive_compatible_path = true
+      enable_hive_compatible_path = false
     }
   ]
 }

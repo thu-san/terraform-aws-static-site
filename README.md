@@ -248,13 +248,13 @@ The test suite covers:
 
 ### S3 Delivery Configuration
 
-The default S3 delivery configuration for CloudWatch logs uses a Hive-compatible path structure:
+The default S3 delivery configuration for CloudWatch logs:
 
 ```hcl
 s3_delivery_configuration = [
   {
     suffix_path                 = "/{account-id}/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
-    enable_hive_compatible_path = true
+    enable_hive_compatible_path = false
   }
 ]
 ```
