@@ -1,19 +1,9 @@
 # Provider configuration for tests
-provider "aws" {
-  region = "us-east-1"
-
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
+mock_provider "aws" {
 }
 
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
+mock_provider "aws" {
+  alias = "us_east_1"
 }
 
 # Basic test - minimal configuration
@@ -21,6 +11,7 @@ run "basic_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -65,6 +56,7 @@ run "custom_domain_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -98,6 +90,7 @@ run "route53_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -147,6 +140,7 @@ run "cloudwatch_logs_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -180,6 +174,7 @@ run "tags_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -217,6 +212,7 @@ run "full_configuration" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -277,6 +273,7 @@ run "verify_resource_configs" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -320,6 +317,7 @@ run "no_route53_without_zone" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -348,6 +346,7 @@ run "no_logs_without_destination" {
   command = plan
 
   providers = {
+    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 

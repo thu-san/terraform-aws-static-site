@@ -50,11 +50,6 @@ else
 fi
 
 echo -e "\n3. Running Terraform Tests..."
-# Remove any existing provider override that might conflict
-if [ -f provider_override.tf ]; then
-    rm -f provider_override.tf
-fi
-
 # Initialize and run tests
 terraform init -upgrade > /dev/null 2>&1
 terraform test -test-directory=test

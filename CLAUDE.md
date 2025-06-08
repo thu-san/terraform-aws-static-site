@@ -19,8 +19,8 @@ terraform fmt -check -recursive
 terraform init
 terraform validate
 
-# Test with mock AWS credentials (for CI simulation)
-cd test && ./ci-simulation.sh
+# Run tests with mock providers
+terraform test -test-directory=test
 ```
 
 ### Development Commands
@@ -61,7 +61,7 @@ This is a Terraform module that creates a complete static website hosting soluti
 
 ### Testing Strategy
 - **Terraform Native Tests**: Located in `test/main.tftest.hcl`, uses the `run` blocks to test various configurations
-- **Provider Override**: Uses `test/provider_override.tf` during tests to avoid real AWS API calls
+- **Mock Providers**: Tests use `mock_provider` blocks to avoid real AWS API calls
 - **Test Coverage**: Tests basic configuration, custom domains, Route53, CloudWatch logs, tagging, and negative cases
 
 ### Variable Requirements
