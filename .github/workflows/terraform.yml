@@ -71,17 +71,11 @@ jobs:
     
     - name: Run Terraform Tests
       run: |
-        # Copy the test provider override to root for tests
-        cp test/provider_override.tf provider_override.tf
+        # Initialize without backend for tests
+        terraform init -backend=false
         
-        # Re-initialize with provider override
-        terraform init -upgrade
-        
-        # Run tests
+        # Run tests (tests have their own provider configuration)
         terraform test -test-directory=test
-        
-        # Clean up
-        rm -f provider_override.tf
 
   test-examples:
     name: Test Examples

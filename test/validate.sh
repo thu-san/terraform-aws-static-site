@@ -39,7 +39,7 @@ done
 
 if [ ${#missing_files[@]} -eq 0 ]; then
     # Check that we're not defining providers in the module
-    if grep -l "^provider\s" *.tf 2>/dev/null | grep -v provider_override.tf; then
+    if grep -l "^provider\s" *.tf 2>/dev/null; then
         echo -e "${RED}ERROR: Module should not define providers${NC}"
         exit 1
     fi
