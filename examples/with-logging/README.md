@@ -11,7 +11,7 @@ module "static_site" {
   s3_bucket_name               = "my-site-bucket"
   cloudfront_distribution_name = "my-site"
   domain_names                 = ["example.com", "www.example.com"]
-  route53_zone_id              = "Z1234567890ABC"
+  hosted_zone_name             = "example.com"
   
   # Enable cross-account CloudWatch log delivery
   log_delivery_destination_arn = "arn:aws:logs:us-east-1:ACCOUNT-ID:delivery-destination:central-logs"

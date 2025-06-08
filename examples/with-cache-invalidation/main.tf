@@ -16,7 +16,6 @@ module "static_site_direct" {
   source = "../.."
 
   providers = {
-    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -52,7 +51,6 @@ module "static_site_custom" {
   source = "../.."
 
   providers = {
-    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
@@ -117,7 +115,6 @@ module "static_site_with_dlq" {
   source = "../.."
 
   providers = {
-    aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 

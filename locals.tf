@@ -7,8 +7,8 @@ locals {
   # Enable CloudWatch logs if destination ARN is provided
   enable_cloudwatch_logs = var.log_delivery_destination_arn != ""
 
-  # Create Route53 records if zone ID and domain names are provided
-  create_route53_records = var.route53_zone_id != "" && length(var.domain_names) > 0
+  # Create Route53 records if hosted zone name and domain names are provided
+  create_route53_records = var.hosted_zone_name != "" && length(var.domain_names) > 0
 
   # Hardcoded default values
   default_root_object      = "index.html"

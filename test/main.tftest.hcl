@@ -75,7 +75,7 @@ run "route53_configuration" {
     s3_bucket_name               = "test-route53-bucket"
     cloudfront_distribution_name = "test-route53-site"
     domain_names                 = ["test.example.com"]
-    route53_zone_id              = "Z1234567890ABC"
+    hosted_zone_name             = "example.com"
   }
 
   # Verify Route53 A records are created
@@ -173,7 +173,7 @@ run "full_configuration" {
     s3_bucket_name               = "test-full-bucket"
     cloudfront_distribution_name = "test-full-site"
     domain_names                 = ["test.example.com", "www.test.example.com"]
-    route53_zone_id              = "Z1234567890ABC"
+    hosted_zone_name             = "example.com"
     log_delivery_destination_arn = "arn:aws:logs:us-east-1:ACCOUNT-ID:delivery-destination:test-destination"
     tags = {
       Environment = "production"
@@ -220,7 +220,7 @@ run "verify_resource_configs" {
     s3_bucket_name               = "test-output-bucket"
     cloudfront_distribution_name = "test-output-site"
     domain_names                 = ["test.example.com"]
-    route53_zone_id              = "Z1234567890ABC"
+    hosted_zone_name             = "example.com"
   }
 
   # Verify bucket configuration
@@ -250,19 +250,19 @@ run "no_route53_without_zone" {
     s3_bucket_name               = "test-no-route53-bucket"
     cloudfront_distribution_name = "test-no-route53-site"
     domain_names                 = ["test.example.com"]
-    route53_zone_id              = ""
+    hosted_zone_name             = ""
   }
 
   # Verify no Route53 records are created
   assert {
     condition     = length(aws_route53_record.this) == 0
-    error_message = "Route53 records should not be created without zone ID"
+    error_message = "Route53 records should not be created without hosted zone name"
   }
 
   # Verify no Route53 IPv6 records
   assert {
     condition     = length(aws_route53_record.ipv6) == 0
-    error_message = "Route53 IPv6 records should not be created without zone ID"
+    error_message = "Route53 IPv6 records should not be created without hosted zone name"
   }
 }
 

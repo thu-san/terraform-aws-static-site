@@ -1,8 +1,14 @@
+# Data source to get the hosted zone
+data "aws_route53_zone" "main" {
+  count = var.hosted_zone_name != "" ? 1 : 0
+  name  = var.hosted_zone_name
+}
+
 # Route53 A Records for CloudFront
 resource "aws_route53_record" "this" {
   for_each = local.create_route53_records ? toset(var.domain_names) : toset([])
 
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.main[0].zone_id
   name    = each.value
   type    = "A"
 
@@ -17,7 +23,7 @@ resource "aws_route53_record" "this" {
 resource "aws_route53_record" "ipv6" {
   for_each = local.create_route53_records ? toset(var.domain_names) : toset([])
 
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.main[0].zone_id
   name    = each.value
   type    = "AAAA"
 

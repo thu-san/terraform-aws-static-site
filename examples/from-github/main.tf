@@ -3,6 +3,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 # Example: Using from GitHub (replace with your actual repository)
 # module "static_site" {
 #   source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.0.0"
@@ -18,6 +23,10 @@ module "static_site" {
   tags = {
     Environment = "production"
     Project     = "my-website"
+  }
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
   }
 }
 

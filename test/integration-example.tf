@@ -8,8 +8,8 @@ module "test_static_site" {
   cloudfront_distribution_name = "test-static-site-${random_id.test.hex}"
 
   # Optional: Add domain names if you have a Route53 hosted zone
-  # domain_names    = ["test.yourdomain.com"]
-  # route53_zone_id = "Z1234567890ABC"
+  # domain_names     = ["test.yourdomain.com"]
+  # hosted_zone_name = "yourdomain.com"
 
   # Optional: Enable CloudWatch logs
   # log_delivery_destination_arn = "arn:aws:logs:us-east-1:ACCOUNT-ID:delivery-destination:test"

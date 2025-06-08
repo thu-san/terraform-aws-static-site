@@ -27,6 +27,15 @@ This Terraform module creates a complete static website hosting solution on AWS 
 ### From Terraform Registry (Recommended)
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source  = "thu-san/static-site/aws"
   version = "~> 1.0"
@@ -38,12 +47,26 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 ```
 
 ### From GitHub
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.0.0"
 
@@ -54,12 +77,26 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 ```
 
 ### With Custom Domain
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
@@ -70,6 +107,11 @@ module "static_site" {
   tags = {
     Environment = "production"
     Project     = "my-awesome-site"
+  }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
   }
 }
 ```
@@ -77,17 +119,31 @@ module "static_site" {
 ### With Route53 DNS Records
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
   domain_names                 = ["example.com", "www.example.com"]
-  route53_zone_id              = "Z1234567890ABC"  # Your Route53 hosted zone ID
+  hosted_zone_name             = "example.com"  # Your Route53 hosted zone name
 
   tags = {
     Environment = "production"
     Project     = "my-awesome-site"
+  }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
   }
 }
 ```
@@ -95,6 +151,15 @@ module "static_site" {
 ### With Cross-Account CloudWatch Logs
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
@@ -109,6 +174,11 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 ```
 
@@ -117,6 +187,15 @@ module "static_site" {
 The cache invalidation feature is built directly into the main module - no sub-modules required. When enabled, it automatically creates all necessary AWS resources including Lambda functions, SQS queues, and IAM roles.
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
@@ -148,6 +227,11 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 ```
 
@@ -160,10 +244,36 @@ module "static_site" {
 
 ## Providers
 
-| Name          | Version |
-| ------------- | ------- |
-| aws           | >= 5.0  |
-| aws.us_east_1 | >= 5.0  |
+This module requires two AWS provider configurations:
+
+| Name          | Version | Purpose                                           |
+| ------------- | ------- | ------------------------------------------------- |
+| aws           | >= 5.0  | Primary provider for all resources                |
+| aws.us_east_1 | >= 5.0  | Required for ACM certificates (CloudFront requirement) |
+
+**Important**: You must configure both providers when using this module:
+
+```hcl
+provider "aws" {
+  region = "your-region"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+module "static_site" {
+  source = "thu-san/static-site/aws"
+  
+  # ... your configuration ...
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
 
 ## Inputs
 
@@ -172,7 +282,7 @@ module "static_site" {
 | s3_bucket_name               | Name of the S3 bucket for static site hosting     | `string`       | n/a        |   yes    |
 | cloudfront_distribution_name | Name/comment for the CloudFront distribution      | `string`       | n/a        |   yes    |
 | domain_names                 | List of domain names for CloudFront distribution  | `list(string)` | `[]`       |    no    |
-| route53_zone_id              | Route53 hosted zone ID for creating DNS records   | `string`       | `""`       |    no    |
+| hosted_zone_name             | Route53 hosted zone name (e.g., "example.com") for creating DNS records | `string`       | `""`       |    no    |
 | log_delivery_destination_arn | ARN of the CloudWatch log delivery destination    | `string`       | `""`       |    no    |
 | s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs     | `list(object)` | See below  |    no    |
 | log_record_fields            | List of CloudWatch log record fields to include   | `list(string)` | `[]`       |    no    |
@@ -235,7 +345,7 @@ This module creates the following AWS resources:
    - **Cross-account delivery supported** - Send logs to a different AWS account
    - Ideal for centralized logging and compliance requirements
 
-5. **Route53 DNS Records** (when route53_zone_id and domain_names provided):
+5. **Route53 DNS Records** (when hosted_zone_name and domain_names provided):
 
    - Automatically creates A records (IPv4) for each domain
    - Automatically creates AAAA records (IPv6) for each domain
@@ -325,6 +435,15 @@ This creates a folder structure like:
 You can customize this by providing your own configuration:
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
@@ -336,6 +455,11 @@ module "static_site" {
       enable_hive_compatible_path = false
     }
   ]
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 ```
 
@@ -368,6 +492,15 @@ invalidation_lambda_config = {
 You can override specific values while keeping others at their defaults:
 
 ```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 module "static_site" {
   source = "path/to/terraform-aws-static-site"
 
@@ -386,6 +519,11 @@ module "static_site" {
     memory_size = 256  # Increase memory
     timeout     = 600  # Increase timeout
     # Other values use defaults
+  }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
   }
 }
 ```

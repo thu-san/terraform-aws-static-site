@@ -20,8 +20,8 @@ variable "log_delivery_destination_arn" {
   default     = ""
 }
 
-variable "route53_zone_id" {
-  description = "Route53 hosted zone ID for creating DNS records"
+variable "hosted_zone_name" {
+  description = "Route53 hosted zone name for creating DNS records (e.g., example.com)"
   type        = string
   default     = ""
 }
