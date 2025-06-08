@@ -24,7 +24,7 @@ locals {
 
   log_record_fields = [
     "timestamp",
-    "distributionid",
+    # "distributionid", # by default, distributionid is in the path already
     "date",
     "time",
     "x-edge-location",

@@ -127,14 +127,15 @@ module "static_site" {
 
 ## Inputs
 
-| Name                         | Description                                      | Type           | Default | Required |
-| ---------------------------- | ------------------------------------------------ | -------------- | ------- | :------: |
-| s3_bucket_name               | Name of the S3 bucket for static site hosting    | `string`       | n/a     |   yes    |
-| cloudfront_distribution_name | Name/comment for the CloudFront distribution     | `string`       | n/a     |   yes    |
-| domain_names                 | List of domain names for CloudFront distribution | `list(string)` | `[]`    |    no    |
-| route53_zone_id              | Route53 hosted zone ID for creating DNS records  | `string`       | `""`    |    no    |
-| log_delivery_destination_arn | ARN of the CloudWatch log delivery destination   | `string`       | `""`    |    no    |
-| tags                         | Tags to apply to all resources                   | `map(string)`  | `{}`    |    no    |
+| Name                         | Description                                      | Type           | Default   | Required |
+| ---------------------------- | ------------------------------------------------ | -------------- | --------- | :------: |
+| s3_bucket_name               | Name of the S3 bucket for static site hosting    | `string`       | n/a       |   yes    |
+| cloudfront_distribution_name | Name/comment for the CloudFront distribution     | `string`       | n/a       |   yes    |
+| domain_names                 | List of domain names for CloudFront distribution | `list(string)` | `[]`      |    no    |
+| route53_zone_id              | Route53 hosted zone ID for creating DNS records  | `string`       | `""`      |    no    |
+| log_delivery_destination_arn | ARN of the CloudWatch log delivery destination   | `string`       | `""`      |    no    |
+| s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs    | `list(object)` | See below |    no    |
+| tags                         | Tags to apply to all resources                   | `map(string)`  | `{}`      |    no    |
 
 ## Outputs
 
@@ -241,6 +242,42 @@ The test suite covers:
 - ✅ Security configurations (private bucket, OAC)
 - ✅ Output validation
 - ✅ Negative test cases
+
+## Default Values
+
+### S3 Delivery Configuration
+
+The default S3 delivery configuration for CloudWatch logs uses a Hive-compatible path structure:
+
+```hcl
+s3_delivery_configuration = [
+  {
+    suffix_path                 = "/{account-id}/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+    enable_hive_compatible_path = true
+  }
+]
+```
+
+This creates a folder structure like:
+
+- `/123456789012/E1ABCD23EFGH/2024/01/15/10/` for logs from account 123456789012, distribution E1ABCD23EFGH, on January 15, 2024, at 10:00 hour
+
+You can customize this by providing your own configuration:
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  # ... other variables ...
+
+  s3_delivery_configuration = [
+    {
+      suffix_path                 = "/cloudfront/{DistributionId}/{yyyy}-{MM}-{dd}"
+      enable_hive_compatible_path = false
+    }
+  ]
+}
+```
 
 ## Examples
 

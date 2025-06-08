@@ -31,3 +31,17 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "s3_delivery_configuration" {
+  description = "S3 delivery configuration for CloudWatch logs"
+  type = list(object({
+    suffix_path                 = string
+    enable_hive_compatible_path = bool
+  }))
+  default = [
+    {
+      suffix_path                 = "/{account-id}/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+      enable_hive_compatible_path = true
+    }
+  ]
+}
