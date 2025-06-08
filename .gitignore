@@ -43,3 +43,5 @@ logs/
 # Temporary files
 *.tmp
 *.bak
+
+lambda_function.zip

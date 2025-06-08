@@ -51,3 +51,59 @@ variable "log_record_fields" {
   type        = list(string)
   default     = []
 }
+
+# Cache Invalidation Variables
+variable "enable_cache_invalidation" {
+  description = "Enable automatic cache invalidation on S3 uploads"
+  type        = bool
+  default     = false
+}
+
+variable "invalidation_mode" {
+  description = "Cache invalidation mode: 'direct' or 'custom'"
+  type        = string
+  default     = "direct"
+
+  validation {
+    condition     = contains(["direct", "custom"], var.invalidation_mode)
+    error_message = "Invalidation mode must be 'direct' or 'custom'"
+  }
+}
+
+variable "invalidation_path_mappings" {
+  description = "Custom path mappings for cache invalidation (used when invalidation_mode is 'custom')"
+  type = list(object({
+    source_pattern     = string
+    invalidation_paths = list(string)
+    description        = optional(string)
+  }))
+  default = []
+}
+
+variable "invalidation_sqs_config" {
+  description = "SQS configuration for batch processing"
+  type = object({
+    batch_window_seconds   = optional(number)
+    batch_size             = optional(number)
+    message_retention_days = optional(number)
+    visibility_timeout     = optional(number)
+  })
+  default = {}
+}
+
+variable "invalidation_lambda_config" {
+  description = "Lambda function configuration"
+  type = object({
+    memory_size          = optional(number)
+    timeout              = optional(number)
+    reserved_concurrency = optional(number)
+    log_retention_days   = optional(number)
+  })
+  default = {}
+}
+
+variable "invalidation_dlq_arn" {
+  description = "ARN of existing SQS queue to use as DLQ for failed invalidations"
+  type        = string
+  default     = ""
+}

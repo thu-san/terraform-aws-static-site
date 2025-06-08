@@ -68,3 +68,15 @@ resource "aws_s3_bucket_policy" "this" {
     ]
   })
 }
+
+# S3 bucket notification configuration for cache invalidation
+resource "aws_s3_bucket_notification" "this" {
+  count = var.enable_cache_invalidation ? 1 : 0
+
+  bucket = aws_s3_bucket.this.id
+
+  queue {
+    queue_arn = aws_sqs_queue.invalidation_queue[0].arn
+    events    = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+  }
+}

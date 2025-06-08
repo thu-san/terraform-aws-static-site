@@ -57,3 +57,24 @@ output "route53_record_fqdns" {
   description = "The FQDNs of the Route53 A records created"
   value       = local.create_route53_records ? [for r in aws_route53_record.this : r.fqdn] : []
 }
+
+# Cache Invalidation Outputs
+output "lambda_function_arn" {
+  description = "ARN of the cache invalidation Lambda function"
+  value       = var.enable_cache_invalidation ? aws_lambda_function.invalidation[0].arn : null
+}
+
+output "lambda_log_group_arn" {
+  description = "ARN of the Lambda CloudWatch Log Group for monitoring"
+  value       = var.enable_cache_invalidation ? aws_cloudwatch_log_group.invalidation_lambda[0].arn : null
+}
+
+output "sqs_queue_url" {
+  description = "URL of the SQS queue for cache invalidation"
+  value       = var.enable_cache_invalidation ? aws_sqs_queue.invalidation_queue[0].url : null
+}
+
+output "sqs_queue_arn" {
+  description = "ARN of the SQS queue for cache invalidation"
+  value       = var.enable_cache_invalidation ? aws_sqs_queue.invalidation_queue[0].arn : null
+}

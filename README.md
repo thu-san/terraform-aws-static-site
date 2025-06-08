@@ -20,6 +20,7 @@ This Terraform module creates a complete static website hosting solution on AWS 
 - 📊 **Cross-Account CloudWatch Logs** - Deliver CloudFront logs to another AWS account
 - 🛡️ **Security First** - Private S3 bucket with CloudFront-only access
 - ⚡ **Optimized Performance** - Compression, caching, and HTTP/2 enabled
+- 🔄 **Automatic Cache Invalidation** - Built-in feature to invalidate CloudFront cache on S3 uploads with flexible path mapping
 
 ## Usage
 
@@ -111,6 +112,45 @@ module "static_site" {
 }
 ```
 
+### With Automatic Cache Invalidation
+
+The cache invalidation feature is built directly into the main module - no sub-modules required. When enabled, it automatically creates all necessary AWS resources including Lambda functions, SQS queues, and IAM roles.
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-awesome-site-bucket"
+  cloudfront_distribution_name = "my-awesome-site"
+
+  # Enable automatic cache invalidation
+  enable_cache_invalidation = true
+
+  # Option 1: Direct mode (invalidate exact paths)
+  invalidation_mode = "direct"
+
+  # Option 2: Custom mode with regex mappings
+  invalidation_mode = "custom"
+  invalidation_path_mappings = [
+    {
+      source_pattern     = "^images/.*"
+      invalidation_paths = ["/images/*"]
+      description        = "Invalidate all images on any image upload"
+    },
+    {
+      source_pattern     = "^(index\\.html|home\\.html)$"
+      invalidation_paths = ["/*"]
+      description        = "Invalidate root on homepage changes"
+    }
+  ]
+
+  tags = {
+    Environment = "production"
+    Project     = "my-awesome-site"
+  }
+}
+```
+
 ## Requirements
 
 | Name      | Version |
@@ -127,16 +167,22 @@ module "static_site" {
 
 ## Inputs
 
-| Name                         | Description                                      | Type           | Default   | Required |
-| ---------------------------- | ------------------------------------------------ | -------------- | --------- | :------: |
-| s3_bucket_name               | Name of the S3 bucket for static site hosting    | `string`       | n/a       |   yes    |
-| cloudfront_distribution_name | Name/comment for the CloudFront distribution     | `string`       | n/a       |   yes    |
-| domain_names                 | List of domain names for CloudFront distribution | `list(string)` | `[]`      |    no    |
-| route53_zone_id              | Route53 hosted zone ID for creating DNS records  | `string`       | `""`      |    no    |
-| log_delivery_destination_arn | ARN of the CloudWatch log delivery destination   | `string`       | `""`      |    no    |
-| s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs    | `list(object)` | See below |    no    |
-| log_record_fields            | List of CloudWatch log record fields to include  | `list(string)` | `[]`      |    no    |
-| tags                         | Tags to apply to all resources                   | `map(string)`  | `{}`      |    no    |
+| Name                         | Description                                       | Type           | Default    | Required |
+| ---------------------------- | ------------------------------------------------- | -------------- | ---------- | :------: |
+| s3_bucket_name               | Name of the S3 bucket for static site hosting     | `string`       | n/a        |   yes    |
+| cloudfront_distribution_name | Name/comment for the CloudFront distribution      | `string`       | n/a        |   yes    |
+| domain_names                 | List of domain names for CloudFront distribution  | `list(string)` | `[]`       |    no    |
+| route53_zone_id              | Route53 hosted zone ID for creating DNS records   | `string`       | `""`       |    no    |
+| log_delivery_destination_arn | ARN of the CloudWatch log delivery destination    | `string`       | `""`       |    no    |
+| s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs     | `list(object)` | See below  |    no    |
+| log_record_fields            | List of CloudWatch log record fields to include   | `list(string)` | `[]`       |    no    |
+| enable_cache_invalidation    | Enable automatic cache invalidation on S3 uploads | `bool`         | `false`    |    no    |
+| invalidation_mode            | Cache invalidation mode: 'direct' or 'custom'     | `string`       | `"direct"` |    no    |
+| invalidation_path_mappings   | Custom path mappings for cache invalidation       | `list(object)` | `[]`       |    no    |
+| invalidation_sqs_config      | SQS configuration for batch processing            | `object`       | See below  |    no    |
+| invalidation_lambda_config   | Lambda function configuration                     | `object`       | See below  |    no    |
+| invalidation_dlq_arn         | ARN of existing SQS queue to use as DLQ           | `string`       | `""`       |    no    |
+| tags                         | Tags to apply to all resources                    | `map(string)`  | `{}`       |    no    |
 
 ## Outputs
 
@@ -154,6 +200,10 @@ module "static_site" {
 | acm_certificate_domain_validation_options | Domain validation options for the ACM certificate |
 | route53_record_names                      | The names of the Route53 A records created        |
 | route53_record_fqdns                      | The FQDNs of the Route53 A records created        |
+| lambda_function_arn                       | ARN of the cache invalidation Lambda function     |
+| lambda_log_group_arn                      | ARN of the Lambda CloudWatch Log Group            |
+| sqs_queue_url                             | URL of the SQS queue for cache invalidation       |
+| sqs_queue_arn                             | ARN of the SQS queue for cache invalidation       |
 
 ## Architecture
 
@@ -186,9 +236,18 @@ This module creates the following AWS resources:
    - Ideal for centralized logging and compliance requirements
 
 5. **Route53 DNS Records** (when route53_zone_id and domain_names provided):
+
    - Automatically creates A records (IPv4) for each domain
    - Automatically creates AAAA records (IPv6) for each domain
    - Uses alias records pointing to CloudFront distribution
+
+6. **Cache Invalidation** (when enable_cache_invalidation is true):
+   - **SQS Queue**: Batches S3 events for efficient processing (created in `sqs_invalidation.tf`)
+   - **Lambda Function**: Processes events and creates CloudFront invalidations (created in `lambda_invalidation.tf`)
+   - **Lambda Code**: Python function located in `./lambda_code/cache_invalidation/index.py`
+   - **Flexible Path Mapping**: Direct mode or custom regex-based mappings
+   - **Cost Optimization**: Deduplicates paths and uses wildcards
+   - **Monitoring**: CloudWatch Logs for debugging and DLQ support
 
 ## Security Considerations
 
@@ -277,6 +336,57 @@ module "static_site" {
       enable_hive_compatible_path = false
     }
   ]
+}
+```
+
+### Cache Invalidation Configuration
+
+The cache invalidation feature uses sensible defaults for all SQS and Lambda configurations. All attributes are optional - when not specified, the following defaults are applied:
+
+#### SQS Configuration Defaults
+
+```hcl
+invalidation_sqs_config = {
+  batch_window_seconds   = # Default: 60 seconds - Time window for batching messages
+  batch_size             = # Default: 100 - Maximum number of messages to process in a batch
+  message_retention_days = # Default: 4 days - How long to retain messages in the queue
+  visibility_timeout     = # Default: 300 seconds - Message visibility timeout
+}
+```
+
+#### Lambda Configuration Defaults
+
+```hcl
+invalidation_lambda_config = {
+  memory_size          = # Default: 128 MB - Lambda memory allocation
+  timeout              = # Default: 300 seconds - Lambda function timeout
+  reserved_concurrency = # Default: 1 - Reserved concurrent executions
+  log_retention_days   = # Default: 7 days - CloudWatch Logs retention
+}
+```
+
+You can override specific values while keeping others at their defaults:
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  # ... other variables ...
+
+  enable_cache_invalidation = true
+
+  # Override only specific SQS settings
+  invalidation_sqs_config = {
+    batch_size = 50  # Process smaller batches
+    # Other values use defaults
+  }
+
+  # Override only specific Lambda settings
+  invalidation_lambda_config = {
+    memory_size = 256  # Increase memory
+    timeout     = 600  # Increase timeout
+    # Other values use defaults
+  }
 }
 ```
 

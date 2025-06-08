@@ -50,6 +50,8 @@ This is a Terraform module that creates a complete static website hosting soluti
 - **acm.tf**: ACM certificate creation and validation (conditional - only when domain_names provided)
 - **route53.tf**: DNS A and AAAA records (conditional - only when route53_zone_id provided)
 - **cloudwatch.tf**: Cross-account log delivery configuration (conditional - only when log_delivery_destination_arn provided)
+- **lambda_invalidation.tf**: Lambda function for cache invalidation (conditional - only when enable_cache_invalidation is true)
+- **sqs_invalidation.tf**: SQS queue and dead letter queue for cache invalidation events (conditional - only when enable_cache_invalidation is true)
 
 ### Key Design Patterns
 1. **Conditional Resource Creation**: Resources like ACM certificates, Route53 records, and CloudWatch logs use `count` to conditionally create based on input variables
@@ -71,3 +73,15 @@ Optional features are enabled by providing:
 - `domain_names`: Triggers ACM certificate creation
 - `route53_zone_id`: Enables DNS record creation
 - `log_delivery_destination_arn`: Enables cross-account CloudWatch log delivery
+- `enable_cache_invalidation`: Enables automatic CloudFront cache invalidation on S3 uploads
+
+### Cache Invalidation Feature
+When `enable_cache_invalidation` is true, the module creates:
+- **Lambda Function**: Defined in `lambda_invalidation.tf` with code in `./lambda_code/cache_invalidation/index.py`
+- **SQS Queue**: Defined in `sqs_invalidation.tf` for batching S3 events
+- **S3 Event Notifications**: Configured in `s3.tf` to trigger SQS on object create/delete
+- **IAM Resources**: Lambda execution role and policies for CloudFront invalidation permissions
+- **Batch Processing**: SQS batches events (configurable batch size/window)
+- **Path Mapping Modes**:
+  - `direct`: Invalidates exact S3 paths
+  - `custom`: Uses regex patterns to map S3 paths to CloudFront invalidation paths
