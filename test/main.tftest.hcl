@@ -1,6 +1,28 @@
+# Provider configuration for tests
+provider "aws" {
+  region = "us-east-1"
+
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+}
+
 # Basic test - minimal configuration
 run "basic_configuration" {
   command = plan
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   variables {
     s3_bucket_name               = "test-static-site-bucket"
@@ -42,6 +64,10 @@ run "basic_configuration" {
 run "custom_domain_configuration" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-domain-bucket"
     cloudfront_distribution_name = "test-domain-site"
@@ -71,11 +97,24 @@ run "custom_domain_configuration" {
 run "route53_configuration" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-route53-bucket"
     cloudfront_distribution_name = "test-route53-site"
     domain_names                 = ["test.example.com"]
     hosted_zone_name             = "example.com"
+  }
+
+  # Mock the Route53 zone data source
+  override_data {
+    target = data.aws_route53_zone.main[0]
+    values = {
+      zone_id = "Z1234567890ABC"
+      name    = "example.com"
+    }
   }
 
   # Verify Route53 A records are created
@@ -107,6 +146,10 @@ run "route53_configuration" {
 run "cloudwatch_logs_configuration" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-logs-bucket"
     cloudfront_distribution_name = "test-logs-site"
@@ -135,6 +178,10 @@ run "cloudwatch_logs_configuration" {
 # Test with tags
 run "tags_configuration" {
   command = plan
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   variables {
     s3_bucket_name               = "test-tags-bucket"
@@ -169,6 +216,10 @@ run "tags_configuration" {
 run "full_configuration" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-full-bucket"
     cloudfront_distribution_name = "test-full-site"
@@ -178,6 +229,15 @@ run "full_configuration" {
     tags = {
       Environment = "production"
       Project     = "full-test"
+    }
+  }
+
+  # Mock the Route53 zone data source
+  override_data {
+    target = data.aws_route53_zone.main[0]
+    values = {
+      zone_id = "Z1234567890ABC"
+      name    = "example.com"
     }
   }
 
@@ -216,11 +276,24 @@ run "full_configuration" {
 run "verify_resource_configs" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-output-bucket"
     cloudfront_distribution_name = "test-output-site"
     domain_names                 = ["test.example.com"]
     hosted_zone_name             = "example.com"
+  }
+
+  # Mock the Route53 zone data source
+  override_data {
+    target = data.aws_route53_zone.main[0]
+    values = {
+      zone_id = "Z1234567890ABC"
+      name    = "example.com"
+    }
   }
 
   # Verify bucket configuration
@@ -246,6 +319,10 @@ run "verify_resource_configs" {
 run "no_route53_without_zone" {
   command = plan
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   variables {
     s3_bucket_name               = "test-no-route53-bucket"
     cloudfront_distribution_name = "test-no-route53-site"
@@ -269,6 +346,10 @@ run "no_route53_without_zone" {
 # Negative test - no CloudWatch logs without destination ARN
 run "no_logs_without_destination" {
   command = plan
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   variables {
     s3_bucket_name               = "test-no-logs-bucket"
