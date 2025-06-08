@@ -7,9 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-08
+
+### Added in 1.1.0
+
+- Automatic cache invalidation feature with Lambda and SQS
+  - Lambda function for processing S3 events and creating CloudFront invalidations
+  - SQS queue for batching S3 upload/delete events
+  - Support for direct and custom path mapping modes
+  - Configurable batch processing with SQS
+  - Dead letter queue support for failed invalidations
+- All configuration attributes for cache invalidation are now optional with sensible defaults
+
+### Changed
+
+- **BREAKING**: Changed from `route53_zone_id` to `hosted_zone_name` variable
+  - Now accepts domain names (e.g., "example.com") instead of zone IDs
+  - Automatically looks up the zone ID using a data source
+- **BREAKING**: Module now requires provider configuration aliases to be passed explicitly
+  - Removed internal provider configuration
+  - Users must define and pass both `aws` and `aws.us_east_1` providers
+- Simplified provider configuration in examples (removed redundant `aws = aws`)
+
+### Fixed
+
+- Lambda code archive now uses `path.module` instead of `path.root` for correct path resolution when used as a module
+
 ## [1.0.0] - 2025-01-08
 
-### Added
+### Added in 1.0.0
+
 - Initial release of the AWS Static Site module
 - S3 bucket with versioning and security best practices
 - CloudFront distribution with Origin Access Control (OAC)
@@ -22,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardcoded sensible defaults for production use
 
 ### Security
+
 - S3 bucket is completely private with no public access
 - CloudFront uses Origin Access Control for secure S3 access
 - Minimum TLS 1.2 enforced
