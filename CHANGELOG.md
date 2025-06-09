@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed null value error when cache invalidation config variables are not provided using `coalesce` function
 - Lambda code archive now uses `path.module` instead of `path.root` for correct path resolution when used as a module
 
 ## [1.0.0] - 2025-01-08

@@ -3,8 +3,8 @@ resource "aws_sqs_queue" "invalidation_queue" {
   count = var.enable_cache_invalidation ? 1 : 0
 
   name                       = "${var.cloudfront_distribution_name}-invalidation-queue"
-  message_retention_seconds  = try(var.invalidation_sqs_config.message_retention_days, 4) * 24 * 60 * 60
-  visibility_timeout_seconds = try(var.invalidation_sqs_config.visibility_timeout, 300)
+  message_retention_seconds  = coalesce(var.invalidation_sqs_config.message_retention_days, 4) * 24 * 60 * 60
+  visibility_timeout_seconds = coalesce(var.invalidation_sqs_config.visibility_timeout, 300)
   receive_wait_time_seconds  = 20 # Long polling
 
   redrive_policy = var.invalidation_dlq_arn != "" ? jsonencode({

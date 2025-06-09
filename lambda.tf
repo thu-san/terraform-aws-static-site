@@ -3,7 +3,7 @@ resource "aws_cloudwatch_log_group" "invalidation_lambda" {
   count = var.enable_cache_invalidation ? 1 : 0
 
   name              = "/aws/lambda/${var.cloudfront_distribution_name}-invalidation"
-  retention_in_days = try(var.invalidation_lambda_config.log_retention_days, 7)
+  retention_in_days = coalesce(var.invalidation_lambda_config.log_retention_days, 7)
 
   tags = var.tags
 }
@@ -81,9 +81,9 @@ resource "aws_lambda_function" "invalidation" {
   role                           = aws_iam_role.invalidation_lambda[0].arn
   handler                        = "index.handler"
   runtime                        = "python3.11"
-  memory_size                    = try(var.invalidation_lambda_config.memory_size, 128)
-  timeout                        = try(var.invalidation_lambda_config.timeout, 300)
-  reserved_concurrent_executions = try(var.invalidation_lambda_config.reserved_concurrency, 1)
+  memory_size                    = coalesce(var.invalidation_lambda_config.memory_size, 128)
+  timeout                        = coalesce(var.invalidation_lambda_config.timeout, 300)
+  reserved_concurrent_executions = coalesce(var.invalidation_lambda_config.reserved_concurrency, 1)
 
   environment {
     variables = {
@@ -107,8 +107,8 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
 
   event_source_arn                   = aws_sqs_queue.invalidation_queue[0].arn
   function_name                      = aws_lambda_function.invalidation[0].arn
-  batch_size                         = try(var.invalidation_sqs_config.batch_size, 100)
-  maximum_batching_window_in_seconds = try(var.invalidation_sqs_config.batch_window_seconds, 60)
+  batch_size                         = coalesce(var.invalidation_sqs_config.batch_size, 100)
+  maximum_batching_window_in_seconds = coalesce(var.invalidation_sqs_config.batch_window_seconds, 60)
   function_response_types            = ["ReportBatchItemFailures"]
   scaling_config {
     maximum_concurrency = 2
