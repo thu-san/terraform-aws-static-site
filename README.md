@@ -7,9 +7,11 @@
 
 This Terraform module creates a complete static website hosting solution on AWS using S3 for storage and CloudFront for global content delivery.
 
-## 🎯 Key Differentiator
+## 🎯 Key Differentiators
 
-**Cross-Account CloudFront Log Delivery** - Unlike other static site modules, this package enables you to deliver CloudFront access logs to a **different AWS account**, making it ideal for centralized logging architectures and enterprise security requirements.
+1. **Automatic Cache Invalidation** - Built-in Lambda-based cache invalidation system that automatically updates CloudFront when S3 content changes. Unlike other static site modules that require manual invalidation or separate tools, this feature is integrated directly into the module with flexible path mapping options.
+
+2. **Cross-Account CloudFront Log Delivery** - Enables you to deliver CloudFront access logs to a **different AWS account**, making it ideal for centralized logging architectures and enterprise security requirements.
 
 ## Features
 
@@ -38,7 +40,7 @@ provider "aws" {
 
 module "static_site" {
   source  = "thu-san/static-site/aws"
-  version = "~> 1.0"
+  version = "~> 1.1"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -68,7 +70,7 @@ provider "aws" {
 }
 
 module "static_site" {
-  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.0.0"
+  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.1.1"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"

@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2025-01-08
+## [1.1.1] - 2025-06-09
 
-### Added in 1.1.0
+### Added
 
 - Automatic cache invalidation feature with Lambda and SQS
   - Lambda function for processing S3 events and creating CloudFront invalidations
@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated README to highlight automatic cache invalidation as a key differentiator
 - **BREAKING**: Changed from `route53_zone_id` to `hosted_zone_name` variable
   - Now accepts domain names (e.g., "example.com") instead of zone IDs
   - Automatically looks up the zone ID using a data source
@@ -35,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-01-08
 
-### Added in 1.0.0
+### Added
 
 - Initial release of the AWS Static Site module
 - S3 bucket with versioning and security best practices
