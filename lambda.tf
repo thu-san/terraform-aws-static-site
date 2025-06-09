@@ -83,7 +83,7 @@ resource "aws_lambda_function" "invalidation" {
   runtime                        = "python3.11"
   memory_size                    = coalesce(var.invalidation_lambda_config.memory_size, 128)
   timeout                        = coalesce(var.invalidation_lambda_config.timeout, 300)
-  reserved_concurrent_executions = coalesce(var.invalidation_lambda_config.reserved_concurrency, 1)
+  reserved_concurrent_executions = var.invalidation_lambda_config.reserved_concurrency
 
   environment {
     variables = {

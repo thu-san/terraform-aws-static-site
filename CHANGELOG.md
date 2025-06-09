@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated README to highlight automatic cache invalidation as a key differentiator
+- Lambda reserved concurrent executions now defaults to `null` (no limit) instead of 1
 - **BREAKING**: Changed from `route53_zone_id` to `hosted_zone_name` variable
   - Now accepts domain names (e.g., "example.com") instead of zone IDs
   - Automatically looks up the zone ID using a data source

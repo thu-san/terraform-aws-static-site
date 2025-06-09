@@ -486,7 +486,7 @@ invalidation_sqs_config = {
 invalidation_lambda_config = {
   memory_size          = # Default: 128 MB - Lambda memory allocation
   timeout              = # Default: 300 seconds - Lambda function timeout
-  reserved_concurrency = # Default: 1 - Reserved concurrent executions
+  reserved_concurrency = # Default: null - No concurrency limit (uses account limit)
   log_retention_days   = # Default: 7 days - CloudWatch Logs retention
 }
 ```
