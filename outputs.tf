@@ -78,3 +78,9 @@ output "sqs_queue_arn" {
   description = "ARN of the SQS queue for cache invalidation"
   value       = var.enable_cache_invalidation ? aws_sqs_queue.invalidation_queue[0].arn : null
 }
+
+# Subfolder Root Object Function Output
+output "subfolder_root_object_function_arn" {
+  description = "ARN of the auto-created CloudFront function for subfolder root object handling"
+  value       = local.create_subfolder_function ? aws_cloudfront_function.subfolder_root_object[0].arn : null
+}

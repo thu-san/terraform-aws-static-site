@@ -13,16 +13,23 @@ This Terraform module creates a complete static website hosting solution on AWS 
 
 2. **Cross-Account CloudFront Log Delivery** - Enables you to deliver CloudFront access logs to a **different AWS account**, making it ideal for centralized logging architectures and enterprise security requirements.
 
+3. **Built-in Subfolder Root Objects** - Automatically serve index files from subdirectories without writing custom CloudFront functions. Simply set `subfolder_root_object` and the module handles the rest, allowing different default files for root vs subfolders.
+
+4. **Wildcard Domain Support** - Full support for wildcard domains with automatic ACM certificate validation, perfect for PR preview deployments and multi-tenant architectures.
+
 ## Features
 
 - 🪣 **S3 Bucket** with versioning enabled and security best practices
 - 🌐 **CloudFront Distribution** with Origin Access Control (OAC)
-- 🔒 **ACM Certificate** automatically created for custom domains
+- 🔒 **ACM Certificate** automatically created for custom domains with DNS validation
 - 🌍 **Route53 DNS Records** - Automatically create A and AAAA records for your domains
 - 📊 **Cross-Account CloudWatch Logs** - Deliver CloudFront logs to another AWS account
 - 🛡️ **Security First** - Private S3 bucket with CloudFront-only access
 - ⚡ **Optimized Performance** - Compression, caching, and HTTP/2 enabled
 - 🔄 **Automatic Cache Invalidation** - Built-in feature to invalidate CloudFront cache on S3 uploads with flexible path mapping
+- 🎯 **CloudFront Function Support** - Attach custom functions for request/response manipulation
+- 📁 **Subfolder Root Objects** - Built-in functionality to serve different index files for subdirectories
+- 🔗 **Wildcard Domain Support** - Full support for wildcard certificates and domains
 
 ## Usage
 
@@ -40,7 +47,7 @@ provider "aws" {
 
 module "static_site" {
   source  = "thu-san/static-site/aws"
-  version = "~> 1.1"
+  version = "~> 1.2"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -184,6 +191,122 @@ module "static_site" {
 }
 ```
 
+### With Wildcard Domains and CloudFront Functions (PR Preview)
+
+This example shows how to use wildcard domains and CloudFront functions for PR preview deployments:
+
+```hcl
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "us_east_1"  
+  region = "us-east-1"
+}
+
+# CloudFront function for PR routing
+resource "aws_cloudfront_function" "pr_router" {
+  name    = "pr-router"
+  runtime = "cloudfront-js-2.0"
+  comment = "Routes PR subdomain requests to S3 subfolders"
+  publish = true
+  
+  code = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var host = request.headers.host.value;
+      
+      // Extract PR number from subdomain (e.g., pr123.dev.example.com)
+      var prMatch = host.match(/^pr(\d+)\./);
+      
+      if (prMatch) {
+        var prNumber = prMatch[1];
+        // Prepend PR folder to the URI
+        request.uri = '/pr' + prNumber + request.uri;
+      }
+      
+      // If URI ends with '/', append 'index.html'
+      if (request.uri.endsWith('/')) {
+        request.uri += 'index.html';
+      }
+      
+      return request;
+    }
+  EOT
+}
+
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-pr-preview-bucket"
+  cloudfront_distribution_name = "my-pr-preview-site"
+  
+  # Multiple domains including wildcard for PR previews
+  domain_names = [
+    "dev.example.com",
+    "*.dev.example.com"  # Wildcard for pr123.dev.example.com
+  ]
+  
+  hosted_zone_name = "example.com"
+  
+  # Attach CloudFront function for PR routing
+  cloudfront_function_associations = [{
+    event_type   = "viewer-request"
+    function_arn = aws_cloudfront_function.pr_router.arn
+  }]
+  
+  tags = {
+    Environment = "development"
+    Project     = "pr-preview"
+  }
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+With this setup:
+
+- Main branch content goes to S3 root → accessible at `dev.example.com`
+- PR #123 content goes to S3 `/pr123/` folder → accessible at `pr123.dev.example.com`
+- PR #456 content goes to S3 `/pr456/` folder → accessible at `pr456.dev.example.com`
+
+### With Subfolder Root Objects
+
+If you need CloudFront to automatically serve default objects from subfolders (e.g., `/about/` → `/about/index.html`), you can use the built-in subfolder root object functionality:
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+  
+  # Automatically serve index.html as the default object for subfolder requests
+  subfolder_root_object = "index.html"
+  
+  # Optionally use a different root object (e.g., "home.html" for root, "index.html" for subfolders)
+  default_root_object = "index.html"
+  
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+This creates a CloudFront function that automatically appends the specified root object to subdirectory paths (but not the root path):
+
+- `/` → Uses CloudFront's `default_root_object` (e.g., `/index.html`)
+- `/about/` → `/about/index.html` (uses `subfolder_root_object`)
+- `/products/` → `/products/index.html` (uses `subfolder_root_object`)
+- `/blog/post-1/` → `/blog/post-1/index.html` (uses `subfolder_root_object`)
+
+This allows you to have different default files for the root and subfolders if needed.
+
 ### With Automatic Cache Invalidation
 
 The cache invalidation feature is built directly into the main module - no sub-modules required. When enabled, it automatically creates all necessary AWS resources including Lambda functions, SQS queues, and IAM roles.
@@ -294,6 +417,9 @@ module "static_site" {
 | invalidation_sqs_config      | SQS configuration for batch processing            | `object`       | See below  |    no    |
 | invalidation_lambda_config   | Lambda function configuration                     | `object`       | See below  |    no    |
 | invalidation_dlq_arn         | ARN of existing SQS queue to use as DLQ           | `string`       | `""`       |    no    |
+| cloudfront_function_associations | List of CloudFront function associations for the default cache behavior | `list(object)` | `[]` | no |
+| default_root_object          | The object that CloudFront returns when requests point to root URL | `string` | `"index.html"` | no |
+| subfolder_root_object        | When set, creates a CloudFront function to serve this file as the default object for subfolder requests | `string` | `""` | no |
 | tags                         | Tags to apply to all resources                    | `map(string)`  | `{}`       |    no    |
 
 ## Outputs
@@ -338,8 +464,10 @@ This module creates the following AWS resources:
 3. **ACM Certificate** (when domain_names provided):
 
    - Automatically created in us-east-1
-   - DNS validation
+   - DNS validation with automatic Route53 record creation (when hosted_zone_name is provided)
    - Supports multiple domains/subdomains
+   - **Supports wildcard domains** (e.g., `*.dev.example.com`)
+   - First domain is primary, others are Subject Alternative Names (SANs)
 
 4. **CloudWatch Logs** (when log_delivery_destination_arn provided):
 

@@ -12,7 +12,7 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
   comment             = var.cloudfront_distribution_name
-  default_root_object = local.default_root_object
+  default_root_object = var.default_root_object
 
   origin {
     domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
@@ -37,6 +37,20 @@ resource "aws_cloudfront_distribution" "this" {
     default_ttl            = local.default_ttl
     max_ttl                = local.max_ttl
     compress               = local.compress
+
+    dynamic "function_association" {
+      for_each = concat(
+        var.cloudfront_function_associations,
+        local.create_subfolder_function ? [{
+          event_type   = "viewer-request"
+          function_arn = aws_cloudfront_function.subfolder_root_object[0].arn
+        }] : []
+      )
+      content {
+        event_type   = function_association.value.event_type
+        function_arn = function_association.value.function_arn
+      }
+    }
   }
 
   restrictions {

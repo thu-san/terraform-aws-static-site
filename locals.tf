@@ -10,8 +10,10 @@ locals {
   # Create Route53 records if hosted zone name and domain names are provided
   create_route53_records = var.hosted_zone_name != "" && length(var.domain_names) > 0
 
+  # Create subfolder index function if subfolder root object is specified
+  create_subfolder_function = var.subfolder_root_object != ""
+
   # Hardcoded default values
-  default_root_object      = "index.html"
   allowed_methods          = ["GET", "HEAD", "OPTIONS"]
   cached_methods           = ["GET", "HEAD"]
   viewer_protocol_policy   = "redirect-to-https"

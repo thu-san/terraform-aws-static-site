@@ -107,3 +107,32 @@ variable "invalidation_dlq_arn" {
   type        = string
   default     = ""
 }
+
+variable "cloudfront_function_associations" {
+  description = "List of CloudFront function associations for the default cache behavior"
+  type = list(object({
+    event_type   = string # Must be one of: viewer-request, viewer-response
+    function_arn = string # Full ARN of the CloudFront function
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for assoc in var.cloudfront_function_associations :
+      contains(["viewer-request", "viewer-response"], assoc.event_type)
+    ])
+    error_message = "Event type must be either 'viewer-request' or 'viewer-response'."
+  }
+}
+
+variable "default_root_object" {
+  description = "The object that CloudFront returns when requests point to root URL"
+  type        = string
+  default     = "index.html"
+}
+
+variable "subfolder_root_object" {
+  description = "When set, creates a CloudFront function to serve this file as the default object for subfolder requests (e.g., 'index.html'). Does not affect the root path, which uses default_root_object."
+  type        = string
+  default     = ""
+}

@@ -367,3 +367,133 @@ run "no_logs_without_destination" {
     error_message = "Log delivery should not be created without destination ARN"
   }
 }
+
+# Test CloudFront function associations
+run "cloudfront_function_associations" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-cf-function-bucket"
+    cloudfront_distribution_name = "test-cf-function-site"
+    cloudfront_function_associations = [
+      {
+        event_type   = "viewer-request"
+        function_arn = "arn:aws:cloudfront::123456789012:function/test-function"
+      }
+    ]
+  }
+
+  # Verify CloudFront function associations are configured
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.default_cache_behavior[0].function_association) == 1
+    error_message = "CloudFront function association should be configured"
+  }
+
+  # Verify function association is configured (checking length is sufficient for mock test)
+  assert {
+    condition     = length(var.cloudfront_function_associations) == 1
+    error_message = "Should have one CloudFront function association configured"
+  }
+}
+
+# Test wildcard domain configuration
+run "wildcard_domain_configuration" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-wildcard-bucket"
+    cloudfront_distribution_name = "test-wildcard-site"
+    domain_names                 = ["dev.example.com", "*.dev.example.com"]
+    hosted_zone_name             = "example.com"
+  }
+
+  # Mock the Route53 zone data source
+  override_data {
+    target = data.aws_route53_zone.main[0]
+    values = {
+      zone_id = "Z1234567890ABC"
+      name    = "example.com"
+    }
+  }
+
+  # Verify ACM certificate is created with wildcard
+  assert {
+    condition     = aws_acm_certificate.this[0].domain_name == "dev.example.com"
+    error_message = "ACM certificate primary domain should be dev.example.com"
+  }
+
+  # Verify wildcard is in subject alternative names
+  assert {
+    condition     = contains(aws_acm_certificate.this[0].subject_alternative_names, "*.dev.example.com")
+    error_message = "ACM certificate should include wildcard domain in SANs"
+  }
+
+  # Verify CloudFront aliases include wildcard
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.aliases) == 2
+    error_message = "CloudFront should have 2 aliases"
+  }
+
+  # Verify Route53 records are created for all domains
+  assert {
+    condition     = length(aws_route53_record.this) == 2
+    error_message = "Should create Route53 records for all domains including wildcard"
+  }
+
+  # Verify certificate validation records are created
+  assert {
+    condition     = length(aws_route53_record.cert_validation) > 0
+    error_message = "Certificate validation records should be created"
+  }
+}
+
+# Test subfolder root object functionality
+run "subfolder_root_object_configuration" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-subfolder-bucket"
+    cloudfront_distribution_name = "test-subfolder-site"
+    subfolder_root_object        = "index.html"
+    default_root_object          = "home.html"
+  }
+
+  # Verify CloudFront function is created
+  assert {
+    condition     = length(aws_cloudfront_function.subfolder_root_object) == 1
+    error_message = "CloudFront function should be created when subfolder_root_object is set"
+  }
+
+  # Verify function name
+  assert {
+    condition     = aws_cloudfront_function.subfolder_root_object[0].name == "test-subfolder-site-subfolder-root-object"
+    error_message = "CloudFront function name should follow naming convention"
+  }
+
+  # Verify default root object is customized
+  assert {
+    condition     = aws_cloudfront_distribution.this.default_root_object == "home.html"
+    error_message = "Default root object should be customizable"
+  }
+
+  # Verify function is attached to distribution
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.default_cache_behavior[0].function_association) == 1
+    error_message = "Subfolder index function should be attached to CloudFront distribution"
+  }
+}

@@ -5,7 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-06-12
+
+### Added
+
+- CloudFront function associations support via `cloudfront_function_associations` variable
+  - Allows attaching custom CloudFront functions for request/response manipulation
+  - Supports both viewer-request and viewer-response event types
+- Wildcard domain support with automatic ACM certificate DNS validation
+  - Full support for wildcard domains (e.g., `*.dev.example.com`)
+  - Automatic Route53 record creation for ACM certificate validation
+  - Enables PR preview deployments and multi-tenant architectures
+- Built-in subfolder root object functionality via `subfolder_root_object` variable
+  - Automatically serves index files from subdirectories
+  - No external CloudFront functions required
+  - Allows different default files for root vs subfolders
+- Customizable default root object via `default_root_object` variable
+  - Previously hardcoded as "index.html"
+  - Now configurable to support different root files
+- New example: PR preview deployments with wildcard domains
+  - Shows how to implement PR preview sites using wildcard subdomains
+  - Includes CloudFront function for routing PR traffic to S3 subfolders
+- New example: Subfolder root object configuration
+  - Demonstrates the built-in subfolder index functionality
+
+### Fixed
+
+- ACM certificate validation now creates Route53 DNS records automatically
+  - Previously required manual DNS record creation
+  - Now handles validation automatically when `hosted_zone_name` is provided
+- CloudFront function for subfolder root objects now correctly preserves the root path behavior
+  - Root path (`/`) uses CloudFront's `default_root_object`
+  - Subfolders use the configured `subfolder_root_object`
 
 ## [1.1.1] - 2025-06-09
 
