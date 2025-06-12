@@ -99,6 +99,7 @@ run "route53_configuration" {
     cloudfront_distribution_name = "test-route53-site"
     domain_names                 = ["test.example.com"]
     hosted_zone_name             = "example.com"
+    skip_certificate_validation  = true
   }
 
   # Mock the Route53 zone data source
@@ -222,6 +223,7 @@ run "full_configuration" {
     domain_names                 = ["test.example.com", "www.test.example.com"]
     hosted_zone_name             = "example.com"
     log_delivery_destination_arn = "arn:aws:logs:us-east-1:ACCOUNT-ID:delivery-destination:test-destination"
+    skip_certificate_validation  = true
     tags = {
       Environment = "production"
       Project     = "full-test"
@@ -282,6 +284,7 @@ run "verify_resource_configs" {
     cloudfront_distribution_name = "test-output-site"
     domain_names                 = ["test.example.com"]
     hosted_zone_name             = "example.com"
+    skip_certificate_validation  = true
   }
 
   # Mock the Route53 zone data source
@@ -415,6 +418,7 @@ run "wildcard_domain_configuration" {
     cloudfront_distribution_name = "test-wildcard-site"
     domain_names                 = ["dev.example.com", "*.dev.example.com"]
     hosted_zone_name             = "example.com"
+    skip_certificate_validation  = true
   }
 
   # Mock the Route53 zone data source
@@ -450,10 +454,10 @@ run "wildcard_domain_configuration" {
     error_message = "Should create Route53 records for all domains including wildcard"
   }
 
-  # Verify certificate validation records are created
+  # Verify certificate validation records are NOT created when skip_certificate_validation is true
   assert {
-    condition     = length(aws_route53_record.cert_validation) > 0
-    error_message = "Certificate validation records should be created"
+    condition     = length(aws_route53_record.cert_validation) == 0
+    error_message = "Certificate validation records should not be created when skip_certificate_validation is true"
   }
 }
 

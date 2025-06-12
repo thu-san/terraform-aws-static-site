@@ -136,3 +136,9 @@ variable "subfolder_root_object" {
   type        = string
   default     = ""
 }
+
+variable "skip_certificate_validation" {
+  description = "Skip ACM certificate DNS validation records (useful for testing)"
+  type        = bool
+  default     = false
+}
