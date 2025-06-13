@@ -1,5 +1,7 @@
 # AWS Static Site Terraform Module
 
+[English](README.md) | [日本語](README-ja.md)
+
 [![Terraform CI](https://github.com/thu-san/terraform-aws-static-site/workflows/Terraform%20CI/badge.svg)](https://github.com/thu-san/terraform-aws-static-site/actions)
 [![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-thu--san%2Fstatic--site%2Faws-blue.svg)](https://registry.terraform.io/modules/thu-san/static-site/aws)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -56,7 +58,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -86,7 +88,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -117,7 +119,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -149,7 +151,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -183,7 +185,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -201,7 +203,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias  = "us_east_1"  
+  alias  = "us_east_1"
   region = "us-east-1"
 }
 
@@ -211,26 +213,26 @@ resource "aws_cloudfront_function" "pr_router" {
   runtime = "cloudfront-js-2.0"
   comment = "Routes PR subdomain requests to S3 subfolders"
   publish = true
-  
+
   code = <<-EOT
     function handler(event) {
       var request = event.request;
       var host = request.headers.host.value;
-      
+
       // Extract PR number from subdomain (e.g., pr123.dev.example.com)
       var prMatch = host.match(/^pr(\d+)\./);
-      
+
       if (prMatch) {
         var prNumber = prMatch[1];
         // Prepend PR folder to the URI
         request.uri = '/pr' + prNumber + request.uri;
       }
-      
+
       // If URI ends with '/', append 'index.html'
       if (request.uri.endsWith('/')) {
         request.uri += 'index.html';
       }
-      
+
       return request;
     }
   EOT
@@ -241,26 +243,26 @@ module "static_site" {
 
   s3_bucket_name               = "my-pr-preview-bucket"
   cloudfront_distribution_name = "my-pr-preview-site"
-  
+
   # Multiple domains including wildcard for PR previews
   domain_names = [
     "dev.example.com",
     "*.dev.example.com"  # Wildcard for pr123.dev.example.com
   ]
-  
+
   hosted_zone_name = "example.com"
-  
+
   # Attach CloudFront function for PR routing
   cloudfront_function_associations = [{
     event_type   = "viewer-request"
     function_arn = aws_cloudfront_function.pr_router.arn
   }]
-  
+
   tags = {
     Environment = "development"
     Project     = "pr-preview"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -284,13 +286,13 @@ module "static_site" {
 
   s3_bucket_name               = "my-site-bucket"
   cloudfront_distribution_name = "my-site"
-  
+
   # Automatically serve index.html as the default object for subfolder requests
   subfolder_root_object = "index.html"
-  
+
   # Optionally use a different root object (e.g., "home.html" for root, "index.html" for subfolders)
   default_root_object = "index.html"
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -352,7 +354,7 @@ module "static_site" {
     Environment = "production"
     Project     = "my-awesome-site"
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -371,9 +373,9 @@ module "static_site" {
 
 This module requires two AWS provider configurations:
 
-| Name          | Version | Purpose                                           |
-| ------------- | ------- | ------------------------------------------------- |
-| aws           | >= 5.0  | Primary provider for all resources                |
+| Name          | Version | Purpose                                                |
+| ------------- | ------- | ------------------------------------------------------ |
+| aws           | >= 5.0  | Primary provider for all resources                     |
 | aws.us_east_1 | >= 5.0  | Required for ACM certificates (CloudFront requirement) |
 
 **Important**: You must configure both providers when using this module:
@@ -390,9 +392,9 @@ provider "aws" {
 
 module "static_site" {
   source = "thu-san/static-site/aws"
-  
+
   # ... your configuration ...
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -402,25 +404,25 @@ module "static_site" {
 
 ## Inputs
 
-| Name                         | Description                                       | Type           | Default    | Required |
-| ---------------------------- | ------------------------------------------------- | -------------- | ---------- | :------: |
-| s3_bucket_name               | Name of the S3 bucket for static site hosting     | `string`       | n/a        |   yes    |
-| cloudfront_distribution_name | Name/comment for the CloudFront distribution      | `string`       | n/a        |   yes    |
-| domain_names                 | List of domain names for CloudFront distribution  | `list(string)` | `[]`       |    no    |
-| hosted_zone_name             | Route53 hosted zone name (e.g., "example.com") for creating DNS records | `string`       | `""`       |    no    |
-| log_delivery_destination_arn | ARN of the CloudWatch log delivery destination    | `string`       | `""`       |    no    |
-| s3_delivery_configuration    | S3 delivery configuration for CloudWatch logs     | `list(object)` | See below  |    no    |
-| log_record_fields            | List of CloudWatch log record fields to include   | `list(string)` | `[]`       |    no    |
-| enable_cache_invalidation    | Enable automatic cache invalidation on S3 uploads | `bool`         | `false`    |    no    |
-| invalidation_mode            | Cache invalidation mode: 'direct' or 'custom'     | `string`       | `"direct"` |    no    |
-| invalidation_path_mappings   | Custom path mappings for cache invalidation       | `list(object)` | `[]`       |    no    |
-| invalidation_sqs_config      | SQS configuration for batch processing            | `object`       | See below  |    no    |
-| invalidation_lambda_config   | Lambda function configuration                     | `object`       | See below  |    no    |
-| invalidation_dlq_arn         | ARN of existing SQS queue to use as DLQ           | `string`       | `""`       |    no    |
-| cloudfront_function_associations | List of CloudFront function associations for the default cache behavior | `list(object)` | `[]` | no |
-| default_root_object          | The object that CloudFront returns when requests point to root URL | `string` | `"index.html"` | no |
-| subfolder_root_object        | When set, creates a CloudFront function to serve this file as the default object for subfolder requests | `string` | `""` | no |
-| tags                         | Tags to apply to all resources                    | `map(string)`  | `{}`       |    no    |
+| Name                             | Description                                                                                             | Type           | Default        | Required |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------- | -------------- | :------: |
+| s3_bucket_name                   | Name of the S3 bucket for static site hosting                                                           | `string`       | n/a            |   yes    |
+| cloudfront_distribution_name     | Name/comment for the CloudFront distribution                                                            | `string`       | n/a            |   yes    |
+| domain_names                     | List of domain names for CloudFront distribution                                                        | `list(string)` | `[]`           |    no    |
+| hosted_zone_name                 | Route53 hosted zone name (e.g., "example.com") for creating DNS records                                 | `string`       | `""`           |    no    |
+| log_delivery_destination_arn     | ARN of the CloudWatch log delivery destination                                                          | `string`       | `""`           |    no    |
+| s3_delivery_configuration        | S3 delivery configuration for CloudWatch logs                                                           | `list(object)` | See below      |    no    |
+| log_record_fields                | List of CloudWatch log record fields to include                                                         | `list(string)` | `[]`           |    no    |
+| enable_cache_invalidation        | Enable automatic cache invalidation on S3 uploads                                                       | `bool`         | `false`        |    no    |
+| invalidation_mode                | Cache invalidation mode: 'direct' or 'custom'                                                           | `string`       | `"direct"`     |    no    |
+| invalidation_path_mappings       | Custom path mappings for cache invalidation                                                             | `list(object)` | `[]`           |    no    |
+| invalidation_sqs_config          | SQS configuration for batch processing                                                                  | `object`       | See below      |    no    |
+| invalidation_lambda_config       | Lambda function configuration                                                                           | `object`       | See below      |    no    |
+| invalidation_dlq_arn             | ARN of existing SQS queue to use as DLQ                                                                 | `string`       | `""`           |    no    |
+| cloudfront_function_associations | List of CloudFront function associations for the default cache behavior                                 | `list(object)` | `[]`           |    no    |
+| default_root_object              | The object that CloudFront returns when requests point to root URL                                      | `string`       | `"index.html"` |    no    |
+| subfolder_root_object            | When set, creates a CloudFront function to serve this file as the default object for subfolder requests | `string`       | `""`           |    no    |
+| tags                             | Tags to apply to all resources                                                                          | `map(string)`  | `{}`           |    no    |
 
 ## Outputs
 
@@ -585,7 +587,7 @@ module "static_site" {
       enable_hive_compatible_path = false
     }
   ]
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
@@ -650,7 +652,7 @@ module "static_site" {
     timeout     = 600  # Increase timeout
     # Other values use defaults
   }
-  
+
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
