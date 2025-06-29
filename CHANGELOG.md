@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-06-29
+
+### Added
+
+- Full SPA (Single Page Application) support via `custom_error_responses` variable
+  - Configurable error response handling for 404 and 403 errors
+  - Enables proper client-side routing for React, Vue, Angular apps
+  - Customizable response codes, paths, and caching TTL
+- Option to skip ACM certificate DNS validation via `skip_certificate_validation` variable
+  - Useful when DNS is managed externally
+  - Certificate must be validated manually when enabled
+- New example: SPA with custom error handling
+  - Demonstrates proper SPA configuration
+  - Shows CloudFront error response setup
+- New example: PR preview deployments with SPA support
+  - Combines wildcard domains with SPA error handling
+  - Full example for PR-based preview environments
+- Japanese documentation (README-ja.md)
+
+### Removed
+
+- Outdated PUBLISHING.md file (superseded by release workflow)
+
 ## [1.2.0] - 2025-06-12
 
 ### Added

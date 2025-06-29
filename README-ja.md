@@ -309,6 +309,57 @@ module "static_site" {
 
 これにより、必要に応じてルートとサブフォルダで異なるデフォルトファイルを使用できます。
 
+### カスタムエラーページ使用時（SPAサポート）
+
+シングルページアプリケーション（SPA）のクライアントサイドルーティングに不可欠な、CloudFront のカスタムエラーレスポンスを設定できます：
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-spa-bucket"
+  cloudfront_distribution_name = "my-spa-site"
+
+  # SPA クライアントサイドルーティング用のエラーレスポンス設定
+  custom_error_responses = [
+    {
+      error_code         = 403
+      response_code      = 200
+      response_page_path = "/index.html"
+    },
+    {
+      error_code         = 404
+      response_code      = 200
+      response_page_path = "/index.html"
+    }
+  ]
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+より良いユーザーエクスペリエンスのためにカスタムエラーページを設定することもできます：
+
+```hcl
+custom_error_responses = [
+  {
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/errors/404.html"
+    error_caching_min_ttl = 300  # 5分間キャッシュ
+  },
+  {
+    error_code         = 500
+    response_code      = 500
+    response_page_path = "/errors/500.html"
+    error_caching_min_ttl = 60   # 1分間キャッシュ
+  }
+]
+```
+
 ### 自動キャッシュ無効化使用時
 
 キャッシュ無効化機能はメインモジュールに直接組み込まれています - サブモジュールは不要です。有効にすると、Lambda 関数、SQS キュー、IAM ロールを含む必要なすべての AWS リソースが自動的に作成されます。
@@ -422,6 +473,8 @@ module "static_site" {
 | cloudfront_function_associations | デフォルトキャッシュ動作用 CloudFront 関数アソシエーションのリスト                                       | `list(object)` | `[]`           | いいえ |
 | default_root_object              | ルート URL へのリクエスト時に CloudFront が返すオブジェクト                                              | `string`       | `"index.html"` | いいえ |
 | subfolder_root_object            | 設定時、サブフォルダリクエストのデフォルトオブジェクトとしてこのファイルを提供する CloudFront 関数を作成 | `string`       | `""`           | いいえ |
+| custom_error_responses           | CloudFront のカスタムエラーレスポンス設定のリスト（SPA ルーティング用の例を参照）                       | `list(object)` | `[]`           | いいえ |
+| skip_certificate_validation      | ACM 証明書の DNS 検証レコードをスキップ（テスト用に便利）                                                | `bool`         | `false`        | いいえ |
 | tags                             | すべてのリソースに適用するタグ                                                                           | `map(string)`  | `{}`           | いいえ |
 
 ## 出力変数
@@ -662,7 +715,16 @@ module "static_site" {
 
 ## 例
 
-完全な例については、[examples](./examples/)ディレクトリを参照してください。
+完全な例については、[examples](./examples/)ディレクトリを参照してください：
+
+- [基本的な使用法](./examples/basic/) - シンプルな静的ウェブサイトホスティング
+- [カスタムドメイン使用例](./examples/with-custom-domain/) - ACM 証明書付きカスタムドメインの使用
+- [SPAエラーハンドリング例](./examples/spa-with-error-handling/) - クライアントサイドルーティング付きシングルページアプリケーション
+- [キャッシュ無効化使用例](./examples/with-cache-invalidation/) - 自動 CloudFront キャッシュ無効化
+- [CloudWatch ログ使用例](./examples/with-logging/) - クロスアカウントログ配信
+- [サブフォルダルートオブジェクト使用例](./examples/with-subfolder-root-object/) - サブディレクトリからインデックスファイルを提供
+- [PR プレビュー環境](./examples/with-pr-preview/) - PR プレビュー用ワイルドカードドメイン
+- [SPAサポート付きPRプレビュー](./examples/with-pr-spa-preview/) - フル SPA ルーティングサポート付き PR プレビュー
 
 ## ライセンス
 
