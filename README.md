@@ -309,6 +309,57 @@ This creates a CloudFront function that automatically appends the specified root
 
 This allows you to have different default files for the root and subfolders if needed.
 
+### With Custom Error Pages (SPA Support)
+
+Configure custom error responses for CloudFront, essential for Single Page Applications (SPAs) that use client-side routing:
+
+```hcl
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-spa-bucket"
+  cloudfront_distribution_name = "my-spa-site"
+
+  # Configure error responses for SPA client-side routing
+  custom_error_responses = [
+    {
+      error_code         = 403
+      response_code      = 200
+      response_page_path = "/index.html"
+    },
+    {
+      error_code         = 404
+      response_code      = 200
+      response_page_path = "/index.html"
+    }
+  ]
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+You can also configure custom error pages for better user experience:
+
+```hcl
+custom_error_responses = [
+  {
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/errors/404.html"
+    error_caching_min_ttl = 300  # Cache for 5 minutes
+  },
+  {
+    error_code         = 500
+    response_code      = 500
+    response_page_path = "/errors/500.html"
+    error_caching_min_ttl = 60   # Cache for 1 minute
+  }
+]
+```
+
 ### With Automatic Cache Invalidation
 
 The cache invalidation feature is built directly into the main module - no sub-modules required. When enabled, it automatically creates all necessary AWS resources including Lambda functions, SQS queues, and IAM roles.
@@ -407,7 +458,7 @@ module "static_site" {
 | Name                             | Description                                                                                             | Type           | Default        | Required |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------- | -------------- | :------: |
 | s3_bucket_name                   | Name of the S3 bucket for static site hosting                                                           | `string`       | n/a            |   yes    |
-| cloudfront_distribution_name     | Name/comment for the CloudFront distribution                                                            | `string`       | n/a            |   yes    |
+| cloudfront_distribution_name     | Name/comment for the CloudFront distribution (alphanumeric characters, underscores, hyphens, slashes, hash signs and dots are allowed) | `string`       | n/a            |   yes    |
 | domain_names                     | List of domain names for CloudFront distribution                                                        | `list(string)` | `[]`           |    no    |
 | hosted_zone_name                 | Route53 hosted zone name (e.g., "example.com") for creating DNS records                                 | `string`       | `""`           |    no    |
 | log_delivery_destination_arn     | ARN of the CloudWatch log delivery destination                                                          | `string`       | `""`           |    no    |
@@ -422,6 +473,8 @@ module "static_site" {
 | cloudfront_function_associations | List of CloudFront function associations for the default cache behavior                                 | `list(object)` | `[]`           |    no    |
 | default_root_object              | The object that CloudFront returns when requests point to root URL                                      | `string`       | `"index.html"` |    no    |
 | subfolder_root_object            | When set, creates a CloudFront function to serve this file as the default object for subfolder requests | `string`       | `""`           |    no    |
+| skip_certificate_validation      | Skip ACM certificate DNS validation records (useful for testing)                                        | `bool`         | `false`        |    no    |
+| custom_error_responses           | List of custom error response configurations for CloudFront (see examples for SPA routing)              | `list(object)` | `[]`           |    no    |
 | tags                             | Tags to apply to all resources                                                                          | `map(string)`  | `{}`           |    no    |
 
 ## Outputs
@@ -662,7 +715,16 @@ module "static_site" {
 
 ## Examples
 
-See the [examples](./examples/) directory for complete examples.
+See the [examples](./examples/) directory for complete examples:
+
+- [Basic Usage](./examples/basic/) - Simple static website hosting
+- [With Custom Domain](./examples/with-custom-domain/) - Using custom domains with ACM certificates
+- [SPA with Error Handling](./examples/spa-with-error-handling/) - Single Page Application with client-side routing
+- [With Cache Invalidation](./examples/with-cache-invalidation/) - Automatic CloudFront cache invalidation
+- [With CloudWatch Logging](./examples/with-logging/) - Cross-account log delivery
+- [With Subfolder Root Objects](./examples/with-subfolder-root-object/) - Serving index files from subdirectories
+- [PR Preview Environment](./examples/with-pr-preview/) - Wildcard domains for PR previews
+- [PR Preview with SPA Support](./examples/with-pr-spa-preview/) - PR previews with full SPA routing support
 
 ## License
 

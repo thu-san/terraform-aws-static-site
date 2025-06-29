@@ -142,3 +142,29 @@ variable "skip_certificate_validation" {
   type        = bool
   default     = false
 }
+
+variable "custom_error_responses" {
+  description = <<-EOT
+    List of custom error response configurations for CloudFront.
+    
+    Common patterns:
+    - SPA routing: Set 403/404 errors to return 200 with /index.html
+    - Custom error pages: Return specific HTML files for different errors
+    - Maintenance mode: Configure 503 responses
+  EOT
+  type = list(object({
+    error_code            = number
+    response_code         = optional(number)
+    response_page_path    = optional(string)
+    error_caching_min_ttl = optional(number, 0)
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for response in var.custom_error_responses :
+      response.error_code >= 400 && response.error_code <= 599
+    ])
+    error_message = "Error codes must be 4xx or 5xx status codes (400-599)."
+  }
+}

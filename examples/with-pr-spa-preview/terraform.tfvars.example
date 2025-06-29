@@ -1,0 +1,34 @@
+# Example configuration for PR SPA Preview deployment
+# Copy this file to terraform.tfvars and update with your values
+
+# S3 bucket name - must be globally unique
+s3_bucket_name = "my-spa-pr-preview-bucket"
+
+# CloudFront distribution name/comment
+cloudfront_distribution_name = "My SPA PR Preview Site"
+
+# Main domain for the site (PR previews will use subdomains)
+# Example: if main_domain = "dev.example.com"
+# - Main site: https://dev.example.com
+# - PR 123: https://pr123.dev.example.com
+main_domain = "dev.example.com"
+
+# Route53 hosted zone name (without subdomain)
+hosted_zone_name = "example.com"
+
+# AWS region for resources (CloudFront is global)
+aws_region = "us-east-1"
+
+# Enable automatic cache invalidation (recommended for SPAs)
+enable_cache_invalidation = true
+
+# Project name for resource naming
+project_name = "my-spa-app"
+
+# Resource tags
+tags = {
+  Project     = "my-spa-app"
+  Environment = "development"
+  Purpose     = "pr-previews"
+  ManagedBy   = "terraform"
+}

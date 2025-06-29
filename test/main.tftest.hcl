@@ -501,3 +501,114 @@ run "subfolder_root_object_configuration" {
     error_message = "Subfolder index function should be attached to CloudFront distribution"
   }
 }
+
+# Test custom error responses for SPA
+run "spa_error_response_configuration" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-spa-bucket"
+    cloudfront_distribution_name = "test-spa-site"
+    custom_error_responses = [
+      {
+        error_code         = 403
+        response_code      = 200
+        response_page_path = "/index.html"
+      },
+      {
+        error_code         = 404
+        response_code      = 200
+        response_page_path = "/index.html"
+      }
+    ]
+  }
+
+  # Verify custom error responses are configured
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.custom_error_response) == 2
+    error_message = "CloudFront should have 2 custom error responses for SPA"
+  }
+
+  # Verify error codes match
+  assert {
+    condition     = contains([for r in aws_cloudfront_distribution.this.custom_error_response : r.error_code], 403)
+    error_message = "CloudFront should have custom error response for 403"
+  }
+
+  assert {
+    condition     = contains([for r in aws_cloudfront_distribution.this.custom_error_response : r.error_code], 404)
+    error_message = "CloudFront should have custom error response for 404"
+  }
+}
+
+# Test custom error pages configuration
+run "custom_error_pages_configuration" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-custom-errors-bucket"
+    cloudfront_distribution_name = "test-custom-errors-site"
+    custom_error_responses = [
+      {
+        error_code            = 404
+        response_code         = 404
+        response_page_path    = "/errors/404.html"
+        error_caching_min_ttl = 300
+      },
+      {
+        error_code            = 500
+        response_code         = 500
+        response_page_path    = "/errors/500.html"
+        error_caching_min_ttl = 60
+      }
+    ]
+  }
+
+  # Verify custom error responses count
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.custom_error_response) == 2
+    error_message = "CloudFront should have 2 custom error responses"
+  }
+
+  # Verify specific error page paths
+  assert {
+    condition     = contains([for r in aws_cloudfront_distribution.this.custom_error_response : r.response_page_path], "/errors/404.html")
+    error_message = "CloudFront should have custom 404 error page"
+  }
+
+  assert {
+    condition     = contains([for r in aws_cloudfront_distribution.this.custom_error_response : r.response_page_path], "/errors/500.html")
+    error_message = "CloudFront should have custom 500 error page"
+  }
+}
+
+# Test no error responses by default
+run "no_error_responses_by_default" {
+  command = plan
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  variables {
+    s3_bucket_name               = "test-no-errors-bucket"
+    cloudfront_distribution_name = "test-no-errors-site"
+  }
+
+  # Verify no custom error responses are created by default
+  assert {
+    condition     = length(aws_cloudfront_distribution.this.custom_error_response) == 0
+    error_message = "CloudFront should have no custom error responses by default"
+  }
+}
