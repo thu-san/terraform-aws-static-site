@@ -49,7 +49,7 @@ provider "aws" {
 
 module "static_site" {
   source  = "thu-san/static-site/aws"
-  version = "~> 1.2"
+  version = "~> 2.0"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -79,7 +79,7 @@ provider "aws" {
 }
 
 module "static_site" {
-  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.1.1"
+  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v2.0.0"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -309,6 +309,90 @@ This creates a CloudFront function that automatically appends the specified root
 
 This allows you to have different default files for the root and subfolders if needed.
 
+### CloudFront Cache Policies
+
+This module uses AWS managed "CachingOptimized" cache policy by default when `cache_policy_id` is not specified. You can override it by specifying a different policy using data sources to reference AWS managed policies by name:
+
+```hcl
+# Example: Using the default behavior (CachingOptimized)
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  # cache_policy_id is optional - defaults to CachingOptimized
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+```hcl
+# Example: Disable caching
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  cache_policy_id = data.aws_cloudfront_cache_policy.caching_disabled.id
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+```hcl
+# Example: Custom cache and origin request policies
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+data "aws_cloudfront_origin_request_policy" "cors_s3_origin" {
+  name = "Managed-CORS-S3Origin"
+}
+
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
+  origin_request_policy_id = data.aws_cloudfront_origin_request_policy.cors_s3_origin.id
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+Available AWS managed policies:
+- **Cache Policies**:
+  - `Managed-CachingDisabled` - No caching, all requests go to origin
+  - `Managed-CachingOptimized` - Optimized for cache hit ratio (default)
+  - `Managed-CachingOptimizedForUncompressedObjects` - For already compressed content
+
+- **Origin Request Policies**:
+  - `Managed-CORS-S3Origin` - For CORS requests to S3 origins
+  - `Managed-AllViewer` - Forwards all headers, cookies, and query strings
+  - `Managed-CORS-CustomOrigin` - For CORS requests to custom origins
+
+- **Response Headers Policies**:
+  - `Managed-CORS-With-Preflight` - CORS headers for preflight requests
+  - `Managed-CORS-with-preflight-and-SecurityHeadersPolicy` - CORS + security headers
+  - `Managed-SecurityHeadersPolicy` - Common security headers
+
 ### With Custom Error Pages (SPA Support)
 
 Configure custom error responses for CloudFront, essential for Single Page Applications (SPAs) that use client-side routing:
@@ -473,9 +557,12 @@ module "static_site" {
 | cloudfront_function_associations | List of CloudFront function associations for the default cache behavior                                 | `list(object)` | `[]`           |    no    |
 | default_root_object              | The object that CloudFront returns when requests point to root URL                                      | `string`       | `"index.html"` |    no    |
 | subfolder_root_object            | When set, creates a CloudFront function to serve this file as the default object for subfolder requests | `string`       | `""`           |    no    |
-| skip_certificate_validation      | Skip ACM certificate DNS validation records (useful for testing)                                        | `bool`         | `false`        |    no    |
-| custom_error_responses           | List of custom error response configurations for CloudFront (see examples for SPA routing)              | `list(object)` | `[]`           |    no    |
-| tags                             | Tags to apply to all resources                                                                          | `map(string)`  | `{}`           |    no    |
+| skip_certificate_validation      | Skip ACM certificate DNS validation records (useful for testing)                                        | `bool`         | `false`                                  |    no    |
+| custom_error_responses           | List of custom error response configurations for CloudFront (see examples for SPA routing)              | `list(object)` | `[]`                                     |    no    |
+| cache_policy_id                  | The ID of the CloudFront cache policy to use. Defaults to 'CachingOptimized' when null                 | `string`       | `null`                                   |    no    |
+| origin_request_policy_id         | The ID of the CloudFront origin request policy to use                                                  | `string`       | `null`                                   |    no    |
+| response_headers_policy_id       | The ID of the CloudFront response headers policy to use                                                | `string`       | `null`                                   |    no    |
+| tags                             | Tags to apply to all resources                                                                          | `map(string)`  | `{}`                                     |    no    |
 
 ## Outputs
 
@@ -497,6 +584,7 @@ module "static_site" {
 | lambda_log_group_arn                      | ARN of the Lambda CloudWatch Log Group            |
 | sqs_queue_url                             | URL of the SQS queue for cache invalidation       |
 | sqs_queue_arn                             | ARN of the SQS queue for cache invalidation       |
+| subfolder_root_object_function_arn        | ARN of the CloudFront function for subfolder root object handling |
 
 ## Architecture
 

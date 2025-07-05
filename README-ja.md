@@ -49,7 +49,7 @@ provider "aws" {
 
 module "static_site" {
   source  = "thu-san/static-site/aws"
-  version = "~> 1.2"
+  version = "~> 2.0"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -79,7 +79,7 @@ provider "aws" {
 }
 
 module "static_site" {
-  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v1.1.1"
+  source = "git::https://github.com/thu-san/terraform-aws-static-site.git?ref=v2.0.0"
 
   s3_bucket_name               = "my-awesome-site-bucket"
   cloudfront_distribution_name = "my-awesome-site"
@@ -308,6 +308,90 @@ module "static_site" {
 - `/blog/post-1/` → `/blog/post-1/index.html`（`subfolder_root_object`を使用）
 
 これにより、必要に応じてルートとサブフォルダで異なるデフォルトファイルを使用できます。
+
+### CloudFront キャッシュポリシー
+
+このモジュールは、`cache_policy_id` が指定されていない場合、デフォルトで AWS マネージド「CachingOptimized」キャッシュポリシーを使用します。データソースを使用して名前で AWS マネージドポリシーを参照することで、異なるポリシーを指定することができます：
+
+```hcl
+# 例：デフォルトの動作を使用（CachingOptimized）
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  # cache_policy_id はオプション - デフォルトで CachingOptimized を使用
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+```hcl
+# 例：キャッシュを無効化
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  cache_policy_id = data.aws_cloudfront_cache_policy.caching_disabled.id
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+```hcl
+# 例：カスタムキャッシュおよびオリジンリクエストポリシー
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+data "aws_cloudfront_origin_request_policy" "cors_s3_origin" {
+  name = "Managed-CORS-S3Origin"
+}
+
+module "static_site" {
+  source = "path/to/terraform-aws-static-site"
+
+  s3_bucket_name               = "my-site-bucket"
+  cloudfront_distribution_name = "my-site"
+
+  cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
+  origin_request_policy_id = data.aws_cloudfront_origin_request_policy.cors_s3_origin.id
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+```
+
+利用可能な AWS マネージドポリシー：
+- **キャッシュポリシー**：
+  - `Managed-CachingDisabled` - キャッシュなし、すべてのリクエストがオリジンに送信される
+  - `Managed-CachingOptimized` - キャッシュヒット率に最適化（デフォルト）
+  - `Managed-CachingOptimizedForUncompressedObjects` - すでに圧縮されたコンテンツ用
+
+- **オリジンリクエストポリシー**：
+  - `Managed-CORS-S3Origin` - S3 オリジンへの CORS リクエスト用
+  - `Managed-AllViewer` - すべてのヘッダー、Cookie、クエリ文字列を転送
+  - `Managed-CORS-CustomOrigin` - カスタムオリジンへの CORS リクエスト用
+
+- **レスポンスヘッダーポリシー**：
+  - `Managed-CORS-With-Preflight` - プリフライトリクエスト用の CORS ヘッダー
+  - `Managed-CORS-with-preflight-and-SecurityHeadersPolicy` - CORS + セキュリティヘッダー
+  - `Managed-SecurityHeadersPolicy` - 一般的なセキュリティヘッダー
 
 ### カスタムエラーページ使用時（SPAサポート）
 

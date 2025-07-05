@@ -1,0 +1,16 @@
+# Deployment
+.deploy-config
+
+# Temporary files
+tmp/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.tfstate.lock.info
+
+# OS files
+.DS_Store

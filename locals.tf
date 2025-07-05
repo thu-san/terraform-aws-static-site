@@ -17,10 +17,6 @@ locals {
   allowed_methods          = ["GET", "HEAD", "OPTIONS"]
   cached_methods           = ["GET", "HEAD"]
   viewer_protocol_policy   = "redirect-to-https"
-  min_ttl                  = 0
-  default_ttl              = 86400
-  max_ttl                  = 31536000
-  compress                 = true
   geo_restriction_type     = "none"
   minimum_protocol_version = "TLSv1.2_2021"
 

@@ -25,18 +25,13 @@ resource "aws_cloudfront_distribution" "this" {
     cached_methods   = local.cached_methods
     target_origin_id = "S3-${aws_s3_bucket.this.id}"
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
+    # Use managed policies for cache, origin request, and response headers
+    # Default to CachingOptimized if cache_policy_id is null
+    cache_policy_id            = var.cache_policy_id != null ? var.cache_policy_id : data.aws_cloudfront_cache_policy.caching_optimized.id
+    origin_request_policy_id   = var.origin_request_policy_id
+    response_headers_policy_id = var.response_headers_policy_id
 
     viewer_protocol_policy = local.viewer_protocol_policy
-    min_ttl                = local.min_ttl
-    default_ttl            = local.default_ttl
-    max_ttl                = local.max_ttl
-    compress               = local.compress
 
     dynamic "function_association" {
       for_each = concat(

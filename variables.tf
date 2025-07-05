@@ -32,6 +32,26 @@ variable "tags" {
   default     = {}
 }
 
+variable "cache_policy_id" {
+  description = "The ID of the CloudFront cache policy to use. Defaults to AWS managed 'CachingOptimized' policy when null."
+  type        = string
+  nullable    = true
+  default     = null
+}
+
+variable "origin_request_policy_id" {
+  description = "The ID of the CloudFront origin request policy to use. Set to null to use no origin request policy."
+  type        = string
+  nullable    = true
+  default     = null
+}
+
+variable "response_headers_policy_id" {
+  description = "The ID of the CloudFront response headers policy to use"
+  type        = string
+  default     = null
+}
+
 variable "s3_delivery_configuration" {
   description = "S3 delivery configuration for CloudWatch logs"
   type = list(object({
