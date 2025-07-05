@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-07-05
+
+### Breaking Changes
+
+- **BREAKING**: Removed all legacy CloudFront cache behavior settings
+  - Removed variables: `forwarded_values`, `min_ttl`, `default_ttl`, `max_ttl`
+  - Users must now use CloudFront cache policies via `cache_policy_id`
+  - Module defaults to AWS managed "CachingOptimized" policy when `cache_policy_id` is null
+- **BREAKING**: Cache policy configuration now uses nullable variables
+  - `cache_policy_id` and `origin_request_policy_id` are now properly nullable
+  - When `cache_policy_id` is null, the module automatically uses the "CachingOptimized" policy
+
+### Added
+
+- Full Next.js SPA example with deployment automation
+  - Complete example showing SPA deployment with custom error handling
+  - Automated deployment scripts (deploy-terraform.sh, deploy-s3.sh, deploy.sh)
+  - Navigation testing app demonstrating various routing scenarios
+  - Smart 404 page that handles trailing slash redirects
+  - Build step integrated into deployment process
+- CloudFront cache and origin request policy support via nullable variables
+  - Simplified configuration without hardcoded policy IDs
+  - Automatic default to "CachingOptimized" when not specified
+  - Data source integration for referencing AWS managed policies by name
+
+### Changed
+
+- Documentation now shows cache policy examples without environment-specific prescriptions
+- Examples use data sources to reference AWS managed policies by name instead of hardcoded IDs
+- Simplified module usage by removing legacy cache configuration complexity
+
+### Migration Guide
+
+Users upgrading from v1.x to v2.0 must:
+
+1. Remove any `forwarded_values`, `min_ttl`, `default_ttl`, `max_ttl` from their configurations
+2. Use `cache_policy_id` instead (or rely on the default "CachingOptimized" policy)
+3. Reference AWS managed policies using data sources instead of hardcoded IDs
+
 ## [1.3.0] - 2025-06-29
 
 ### Added
